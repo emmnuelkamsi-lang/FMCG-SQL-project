@@ -161,12 +161,54 @@ order by  Total_profit ASC;
  where YEARS = 2019 AND MONTHS IN ('October', 'November','December')
  group by COUNTRIES
  order by  Total_Profit DESC;
- 
- 
 
+-- =====================================================
+-- ADVANCED ANALYSIS: WINDOW FUNCTIONS & RANKINGS
+-- =====================================================
 
+-- RANK COUNTRIES BY PROFIT WITHIN EACH YEAR
 
+SELECT YEARS, COUNTRIES, SUM(PROFIT) AS Total_Profit,
+       RANK() OVER (PARTITION BY YEARS ORDER BY SUM(PROFIT) DESC) AS Profit_Rank
+FROM international_fmcg_sql_assessment
+GROUP BY YEARS, COUNTRIES
+ORDER BY YEARS, Profit_Rank;
 
+-- RUNNING TOTAL OF PROFIT BY YEAR (CUMULATIVE PROFIT OVER TIME)
+
+SELECT YEARS, SUM(PROFIT) AS Yearly_Profit,
+       SUM(SUM(PROFIT)) OVER (ORDER BY YEARS) AS Running_Total_Profit
+FROM international_fmcg_sql_assessment
+GROUP BY YEARS
+ORDER BY YEARS;
+
+-- YEAR-OVER-YEAR PROFIT GROWTH (%) OVERALL
+
+SELECT YEARS, SUM(PROFIT) AS Total_Profit,
+       LAG(SUM(PROFIT)) OVER (ORDER BY YEARS) AS Previous_Year_Profit,
+       ROUND((SUM(PROFIT) - LAG(SUM(PROFIT)) OVER (ORDER BY YEARS))
+             / LAG(SUM(PROFIT)) OVER (ORDER BY YEARS) * 100, 2) AS YoY_Growth_Percent
+FROM international_fmcg_sql_assessment
+GROUP BY YEARS
+ORDER BY YEARS;
+
+-- YEAR-OVER-YEAR PROFIT GROWTH (%) BY COUNTRY
+
+SELECT COUNTRIES, YEARS, SUM(PROFIT) AS Total_Profit,
+       LAG(SUM(PROFIT)) OVER (PARTITION BY COUNTRIES ORDER BY YEARS) AS Previous_Year_Profit,
+       ROUND((SUM(PROFIT) - LAG(SUM(PROFIT)) OVER (PARTITION BY COUNTRIES ORDER BY YEARS))
+             / LAG(SUM(PROFIT)) OVER (PARTITION BY COUNTRIES ORDER BY YEARS) * 100, 2) AS YoY_Growth_Percent
+FROM international_fmcg_sql_assessment
+GROUP BY COUNTRIES, YEARS
+ORDER BY COUNTRIES, YEARS;
+
+-- TOP SALES REP OVERALL BY TOTAL PROFIT GENERATED
+
+SELECT SALES_REP, SUM(PROFIT) AS Total_Profit,
+       RANK() OVER (ORDER BY SUM(PROFIT) DESC) AS Sales_Rep_Rank
+FROM international_fmcg_sql_assessment
+GROUP BY SALES_REP
+ORDER BY Sales_Rep_Rank;
 
 
 
